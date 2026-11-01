@@ -1,4 +1,4 @@
-# VehicleGPT 🚗
+# VehicleGPT 
 ### Offline Vehicle Intelligence with Deterministic Analytics
 
 VehicleGPT is an offline, read-only vehicle-history assistant that analyzes vehicle telemetry, detects anomalies, reconstructs events, and answers vehicle-related questions using deterministic SQL and analytics.
