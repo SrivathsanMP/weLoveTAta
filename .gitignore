@@ -1,0 +1,12 @@
+__pycache__/
+.venv/
+venv/
+*.py[cod]
+.env
+.env.*
+runtime/
+*.sock
+data/*.db
+data/*.db-*
+data/ground_truth.json
+models/*.gguf

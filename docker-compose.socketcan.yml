@@ -1,0 +1,7 @@
+services:
+  ingest:
+    environment:
+      INGEST_MODE: SOCKETCAN
+      CAN_IFACE: ${CAN_IFACE:-can0}
+    network_mode: host
+    cap_add: [NET_RAW]

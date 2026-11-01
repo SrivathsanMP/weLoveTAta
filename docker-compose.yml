@@ -1,0 +1,74 @@
+services:
+  ingest:
+    build: ./ingest
+    network_mode: none
+    environment:
+      INGEST_MODE: SIM
+      SIM_SEED: "20261101"
+      DATA_DIR: /data
+    volumes:
+      - vehicle_data:/data
+    group_add: ["10000"]
+    cap_drop: [ALL]
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    restart: "no"
+
+  engine:
+    build:
+      context: ./engine
+      args:
+        WITH_LLM: ${WITH_LLM:-0}
+    environment:
+      DB_PATH: /data/vehicle.db
+      SOCKET_PATH: /ipc/engine.sock
+      MODEL_PATH: /models/qwen2.5-0.5b-instruct-q4_k_m.gguf
+      MOCK_LLM: ${MOCK_LLM:-1}
+    volumes:
+      - vehicle_data:/data
+      - ./models:/models:ro
+      - ipc:/ipc
+    group_add: ["10000"]
+    network_mode: none
+    cap_drop: [ALL]
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    mem_limit: 1000m
+    cpuset: "0,1"
+    depends_on:
+      ingest:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, python, -c, "import os,socket; s=socket.socket(socket.AF_UNIX); s.connect('/ipc/engine.sock'); s.close()"]
+      interval: 5s
+      timeout: 2s
+      retries: 12
+      start_period: 30s
+
+  ui:
+    build: ./ui
+    environment:
+      SOCKET_PATH: /ipc/engine.sock
+      ENGINEER_TOKEN: ${ENGINEER_TOKEN:-}
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ipc:/ipc
+    group_add: ["10002"]
+    cap_drop: [ALL]
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    mem_limit: 200m
+    depends_on:
+      engine:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  ipc:
+  vehicle_data:
